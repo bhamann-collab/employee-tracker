@@ -88,6 +88,23 @@ async function main() {
             VALUES ('${newEmployee.first_name}', '${newEmployee.last_name}', '${roleID[1][0].id}');
             `);
         }
+        else if (answer === 'Update employee roles') {
+            let updateUser = await getUser();
+            let updateRole = await getRole();
+            console.log(updateUser,updateRole)
+            let id = convertToNumber(updateUser.name)
+            let role = convertToNumber(updateRole.role)
+            console.log(id, role)
+
+            //changing entry in database
+            await query(`
+            USE employee_tracker_brock;
+            UPDATE employee
+            SET role_id = ${role}
+            WHERE id = ${id};
+            SELECT * from employee;
+            `);
+        }
     }
 }
 
@@ -117,4 +134,65 @@ async function addUser() {
         ]).then(answers => resolve(answers))
     })
 }
+
+async function getUser() {
+    let modifyUserItems = await query(`
+    USE employee_tracker_brock;
+    SELECT id, first_name, last_name from employee;
+    `);
+
+    modifyUserItems = modifyUserItems[1].map(arr => `${arr.id} ${arr.first_name} ${arr.last_name}`)
+    
+    console.log(modifyUserItems)
+    return new Promise(resolve => {
+        inquirer
+        .prompt([
+            {
+                type: 'list',
+                name: 'name',
+                message: 'Please select employee you want to change',
+                choices: modifyUserItems,
+                value: 'number'
+            }
+
+
+        ]).then(answers => resolve(answers))
+    })
+}
+
+async function getRole() {
+    let roles = await query(`
+    USE employee_tracker_brock;
+    SELECT id, title from role;
+    `)
+    roles = roles[1].map(arr => `${arr.id} ${arr.title}`)
+
+    return new Promise(resolve => {
+        inquirer
+        .prompt([
+            {
+                type: 'list',
+                name: 'role',
+                message: 'Please select role your employee will change into',
+                choices: roles
+            }
+        ]).then(answers => resolve(answers))
+    })
+
+}
+
+function convertToNumber(numString) {
+    let newNum = ''
+    for(let i = 0; i < numString.length; i++) {
+        if(numString[i] >= '0' && numString[i] <= '9') {
+            newNum += numString.charAt(i)
+        } else {
+            newNum = parseInt(newNum, 10)
+            return newNum
+        }
+    }
+}
+
+
 main()
+//getRole()
